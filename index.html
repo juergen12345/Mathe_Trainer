@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mathe-Trainer (7. Klasse)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 2em;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        .exercise {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1em;
+            font-size: 1.2em;
+        }
+
+        .exercise-text {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .fraction {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            vertical-align: middle;
+            margin: 0 3px;
+        }
+
+        .fraction-numerator {
+            border-bottom: 1px solid #333;
+            padding: 0 5px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .fraction-denominator {
+            padding: 0 5px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        input[type="number"] {
+            width: 80px;
+            padding: 0.5em;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 1.5em;
+        }
+
+        .button-group button {
+            flex: 1;
+            padding: 1em;
+            font-size: 1.1em;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #check-button {
+            background-color: #007BFF;
+        }
+
+        #check-button:hover {
+            background-color: #0056b3;
+        }
+
+        #new-exercises-button {
+            background-color: #28a745;
+        }
+
+        #new-exercises-button:hover {
+            background-color: #218838;
+        }
+
+        #result-message {
+            text-align: center;
+            margin-top: 1em;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .correct {
+            color: green;
+        }
+
+        .incorrect {
+            color: red;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-around;
+            gap: 10px;
+            margin-top: 2em;
+            flex-wrap: wrap;
+        }
+
+        .navigation button {
+            padding: 0.8em 1.5em;
+            font-size: 1em;
+            border: 2px solid #007BFF;
+            border-radius: 5px;
+            background-color: #fff;
+            color: #007BFF;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .navigation button:hover {
+            background-color: #e6f2ff;
+        }
+
+        .navigation button.active {
+            background-color: #007BFF;
+            color: #fff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mathe-Trainer</h1>
+        <div id="exercise-section">
+            <h2 id="page-title">Addition und Subtraktion</h2>
+            <div id="exercises"></div>
+            <div class="button-group">
+                <button id="check-button">Überprüfen</button>
+                <button id="new-exercises-button">Neue Aufgaben</button>
+            </div>
+            <div id="result-message"></div>
+        </div>
+        <div class="navigation">
+            <button id="add-sub-button" class="active">Addition & Subtraktion</button>
+            <button id="mult-div-button">Multiplikation & Division</button>
+            <button id="brackets-button">Klammern auflösen</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const exercisesDiv = document.getElementById('exercises');
+            const checkButton = document.getElementById('check-button');
+            const newExercisesButton = document.getElementById('new-exercises-button');
+            const resultMessageDiv = document.getElementById('result-message');
+            const pageTitle = document.getElementById('page-title');
+            const addSubButton = document.getElementById('add-sub-button');
+            const multDivButton = document.getElementById('mult-div-button');
+            const bracketsButton = document.getElementById('brackets-button');
+
+            let currentMode = 'add-sub';
+
+            function getRandomInt(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+
+            function getRandomNonZero(min, max) {
+                let num = 0;
+                while (num === 0) {
+                    num = getRandomInt(min, max);
+                }
+                return num;
+            }
+
+            function generateAddSubProblem() {
+                const num1 = getRandomInt(-20, 20);
+                const num2 = getRandomInt(-20, 20);
+                const operator = Math.random() < 0.5 ? '+' : '-';
+                let problemText;
+                let answer;
+
+                const num2Formatted = num2 < 0 ? `(${num2})` : num2;
+
+                if (operator === '+') {
+                    problemText = `${num1} + ${num2Formatted}`;
+                    answer = num1 + num2;
+                } else {
+                    problemText = `${num1} - ${num2Formatted}`;
+                    answer = num1 - num2;
+                }
+                
+                return { text: problemText, answer: answer };
+            }
+
+            function generateMultDivProblem() {
+                const type = Math.random() < 0.5 ? 'mult' : 'div';
+                let problemHTML, answer;
+
+                if (type === 'mult') {
+                    const num1 = getRandomInt(-10, 10);
+                    const num2 = getRandomInt(-10, 10);
+                    problemHTML = `${num1} × ${num2 < 0 ? `(${num2})` : num2}`;
+                    answer = num1 * num2;
+                } else {
+                    const isFractionProblem = Math.random() < 0.5;
+                    if (isFractionProblem) {
+                        const num = getRandomInt(-10, 10);
+                        const denominator = [2, 3, 4, 5][getRandomInt(0, 3)];
+                        const sign = Math.random() < 0.5 ? 1 : -1;
+                        const fractionValue = sign / denominator;
+                        
+                        const numeratorSign = sign < 0 ? '−' : '';
+                        problemHTML = `${num} ÷ <span class="fraction"><span class="fraction-numerator">${numeratorSign}1</span><span class="fraction-denominator">${denominator}</span></span>`;
+                        answer = num / fractionValue;
+                    } else {
+                        const divisor = getRandomNonZero(-10, 10);
+                        const result = getRandomInt(-10, 10);
+                        const dividend = divisor * result;
+
+                        problemHTML = `${dividend} ÷ ${divisor < 0 ? `(${divisor})` : divisor}`;
+                        answer = result;
+                    }
+                }
+                
+                return { text: problemHTML, answer: answer, isHTML: type === 'div' };
+            }
+
+            function generateBracketsProblem() {
+                const termsInBrackets = getRandomInt(2, 3);
+                let problemText = '';
+                let answer = 0;
+                const operatorBeforeBrackets = Math.random() < 0.5 ? '+' : '-';
+                const numBeforeBrackets = getRandomInt(-20, 20);
+                let bracketsContent = '';
+
+                for (let i = 0; i < termsInBrackets; i++) {
+                    const term = getRandomInt(-20, 20);
+                    bracketsContent += `${i > 0 && term >= 0 ? ' + ' : ' '}${term}`;
+                    answer += term;
+                }
+
+                if (operatorBeforeBrackets === '+') {
+                    problemText = `${numBeforeBrackets} + (${bracketsContent.trim()})`;
+                    answer = numBeforeBrackets + answer;
+                } else {
+                    problemText = `${numBeforeBrackets} − (${bracketsContent.trim()})`;
+                    answer = numBeforeBrackets - answer;
+                }
+
+                return { text: problemText, answer: answer };
+            }
+
+            function generateExercises() {
+                exercisesDiv.innerHTML = '';
+                resultMessageDiv.textContent = '';
+                const problems = [];
+                
+                for (let i = 0; i < 6; i++) {
+                    let problem;
+                    if (currentMode === 'add-sub') {
+                        problem = generateAddSubProblem();
+                    } else if (currentMode === 'mult-div') {
+                        problem = generateMultDivProblem();
+                    } else if (currentMode === 'brackets') {
+                        problem = generateBracketsProblem();
+                    }
+                    
+                    problems.push(problem);
+
+                    const exerciseDiv = document.createElement('div');
+                    exerciseDiv.className = 'exercise';
+                    
+                    const textSpan = document.createElement('span');
+                    textSpan.className = 'exercise-text';
+                    if (problem.isHTML) {
+                        textSpan.innerHTML = problem.text + ' = ';
+                    } else {
+                        textSpan.textContent = problem.text + ' = ';
+                    }
+                    
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.className = 'answer-input';
+                    input.setAttribute('data-answer', problem.answer);
+                    
+                    exerciseDiv.appendChild(textSpan);
+                    exerciseDiv.appendChild(input);
+                    exercisesDiv.appendChild(exerciseDiv);
+                }
+                
+                // Fokus auf erstes Eingabefeld setzen
+                const firstInput = exercisesDiv.querySelector('input');
+                if (firstInput) firstInput.focus();
+            }
+
+            function checkAnswers() {
+                let correctCount = 0;
+                const inputs = document.querySelectorAll('.answer-input');
+                inputs.forEach(input => {
+                    const correctAnswer = parseFloat(input.getAttribute('data-answer'));
+                    const userAnswer = parseFloat(input.value);
+
+                    if (userAnswer === correctAnswer) {
+                        input.style.borderColor = 'green';
+                        correctCount++;
+                    } else {
+                        input.style.borderColor = 'red';
+                    }
+                });
+
+                if (correctCount === 6) {
+                    resultMessageDiv.textContent = 'Alle Aufgaben richtig! 🎉';
+                    resultMessageDiv.className = 'correct';
+                } else {
+                    resultMessageDiv.textContent = `${correctCount} von 6 Aufgaben richtig.`;
+                    resultMessageDiv.className = 'incorrect';
+                }
+            }
+
+            function switchMode(mode) {
+                currentMode = mode;
+                
+                // Aktiven Button hervorheben
+                document.querySelectorAll('.navigation button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                if (mode === 'add-sub') {
+                    pageTitle.textContent = 'Addition und Subtraktion';
+                    addSubButton.classList.add('active');
+                } else if (mode === 'mult-div') {
+                    pageTitle.textContent = 'Multiplikation und Division';
+                    multDivButton.classList.add('active');
+                } else if (mode === 'brackets') {
+                    pageTitle.textContent = 'Klammern auflösen';
+                    bracketsButton.classList.add('active');
+                }
+                generateExercises();
+            }
+
+            // Enter-Taste zum Überprüfen
+            exercisesDiv.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    checkAnswers();
+                }
+            });
+
+            checkButton.addEventListener('click', checkAnswers);
+            newExercisesButton.addEventListener('click', generateExercises);
+            addSubButton.addEventListener('click', () => switchMode('add-sub'));
+            multDivButton.addEventListener('click', () => switchMode('mult-div'));
+            bracketsButton.addEventListener('click', () => switchMode('brackets'));
+
+            generateExercises();
+        });
+    </script>
+</body>
+</html>
